@@ -1,0 +1,40 @@
+name: "vocoder"
+backend: "python"
+max_batch_size: 1
+dynamic_batching {
+    max_queue_delay_microseconds: 0
+}
+parameters [
+  {
+   key: "model_dir",
+   value: {string_value:"/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice/runtime/triton_trtllm/Fun-CosyVoice3-0.5B-2512"}
+  }
+]
+
+input [
+  {
+    name: "mel"
+    data_type: TYPE_FP32
+    dims: [80, -1]
+  },
+  {
+    name: "finalize"
+    data_type: TYPE_BOOL
+    dims: [ 1 ]
+    reshape: { shape: [ ] }
+  }
+]
+output [
+  {
+    name: "tts_speech"
+    data_type: TYPE_FP32
+    dims: [ -1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_CPU
+  }
+]

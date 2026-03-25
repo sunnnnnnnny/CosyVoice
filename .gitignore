@@ -50,3 +50,12 @@ pretrained_models/*
 *_pb2_grpc.py
 *_pb2.py
 *.tar
+
+# 
+runtime/triton_trtllm/Fun-CosyVoice3-0.5B-2512
+runtime/triton_trtllm/hf_cosyvoice3_llm
+runtime/triton_trtllm/trt_engines_bfloat16
+runtime/triton_trtllm/trt_weights_bfloat16
+runtime/triton_trtllm/model_repo_cosyvoice3_copy
+runtime/triton_trtllm/model.cache
+runtime/triton_trtllm/cosyvoice3_wenetspeech4tts_trtllm_llm_batch_size_*

@@ -40,7 +40,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'third_party/Matcha-TTS'))
-
+sys.path.append("/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice")
+sys.path.append("/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice/third_party/Matcha-TTS")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -50,13 +51,13 @@ def parse_args():
     parser.add_argument(
         "--model-dir",
         type=str,
-        default="pretrained_models/Fun-CosyVoice3-0.5B",
+        default="/gpfs01/nfs_share/data20250106/yuqiangz/models1/Fun-CosyVoice3-0.5B_zh_en_malay_spanish_arabic_singlish_data_v4",
         help="Path to CosyVoice3 model directory",
     )
     parser.add_argument(
         "--output-dir",
         type=str,
-        default=None,
+        default="/gpfs01/nfs_share/data20250106/yuqiangz/models1/Fun-CosyVoice3-0.5B_zh_en_malay_spanish_arabic_singlish_data_v4_hf",
         help="Output directory for HuggingFace model (default: <model-dir>/hf_merged)",
     )
     parser.add_argument(

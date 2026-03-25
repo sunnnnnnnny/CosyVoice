@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright (c) 2026 NVIDIA (authors: Yuekai Zhang)
 export CUDA_VISIBLE_DEVICES=0
-cosyvoice_path=/workspace/CosyVoice
+cosyvoice_path=/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice
 
 export PYTHONPATH=${cosyvoice_path}:$PYTHONPATH
 export PYTHONPATH=${cosyvoice_path}/third_party/Matcha-TTS:$PYTHONPATH
@@ -10,6 +10,7 @@ stage=$1
 stop_stage=$2
 
 huggingface_llm_local_dir=$cosyvoice_path/runtime/triton_trtllm/hf_cosyvoice3_llm
+huggingface_llm_local_dir="/gpfs01/nfs_share/data20250106/yuqiangz/models1/Fun-CosyVoice3-0.5B_zh_en_malay_spanish_arabic_singlish_data_v4_hf"
 cosyvoice3_official_model_dir=$cosyvoice_path/runtime/triton_trtllm/Fun-CosyVoice3-0.5B-2512
 
 trt_dtype=bfloat16
@@ -78,7 +79,7 @@ if [ $stage -le 2 ] && [ $stop_stage -ge 2 ]; then
     LLM_TOKENIZER_DIR=$huggingface_llm_local_dir
     BLS_INSTANCE_NUM=$bls_instance_num
     TRITON_MAX_BATCH_SIZE=1
-    DECOUPLED_MODE=True # False for offline TTS
+    DECOUPLED_MODE=False # False for offline TTS
 
     python3 scripts/fill_template.py -i ${model_repo}/cosyvoice3/config.pbtxt model_dir:${MODEL_DIR},bls_instance_num:${BLS_INSTANCE_NUM},llm_tokenizer_dir:${LLM_TOKENIZER_DIR},triton_max_batch_size:${TRITON_MAX_BATCH_SIZE},decoupled_mode:${DECOUPLED_MODE},max_queue_delay_microseconds:${MAX_QUEUE_DELAY_MICROSECONDS}
     python3 scripts/fill_template.py -i ${model_repo}/token2wav/config.pbtxt model_dir:${MODEL_DIR},triton_max_batch_size:${TRITON_MAX_BATCH_SIZE},max_queue_delay_microseconds:${MAX_QUEUE_DELAY_MICROSECONDS}
