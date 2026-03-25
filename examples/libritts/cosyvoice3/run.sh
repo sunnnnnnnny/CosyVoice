@@ -2,12 +2,14 @@
 # Copyright 2024 Alibaba Inc. All Rights Reserved.
 . ./path.sh || exit 1;
 
-stage=-1
-stop_stage=3
+stage=5
+stop_stage=5
 
 data_url=www.openslr.org/resources/60
 data_dir=/mnt/lyuxiang.lx/data/tts/openslr/libritts
-pretrained_model_dir=../../../pretrained_models/Fun-CosyVoice3-0.5B
+pretrained_model_dir=/gpfs01/nfs_share/data20250106/zhangdejun/tts/code/CosyVoice-20260105/examples/libritts/cosyvoice3/pretrained_models/Fun-CosyVoice3-0.5B_zh_en_malay_spanish_arabic_singlish_data_v4
+data_exp="zh_en_malay_spanish_arabic_singlish_data_v4"
+model_exp="0309_multilingual_v4_ft"
 
 if [ ${stage} -le -1 ] && [ ${stop_stage} -ge -1 ]; then
   echo "Data Download"
@@ -54,7 +56,7 @@ if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
 fi
 
 # train llm
-export CUDA_VISIBLE_DEVICES="0"
+export CUDA_VISIBLE_DEVICES="0,1,2,3,4,5,6,7"
 num_gpus=$(echo $CUDA_VISIBLE_DEVICES | awk -F "," '{print NF}')
 job_id=1986
 dist_backend="nccl"
@@ -66,22 +68,20 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
   if [ $train_engine == 'deepspeed' ]; then
     echo "Notice deepspeed has its own optimizer config. Modify conf/ds_stage2.json if necessary"
   fi
-  cat data/{train-clean-100,train-clean-360,train-other-500}/parquet/data.list > data/train.data.list
-  cat data/{dev-clean,dev-other}/parquet/data.list > data/dev.data.list
   for model in llm flow hifigan; do
     torchrun --nnodes=1 --nproc_per_node=$num_gpus \
         --rdzv_id=$job_id --rdzv_backend="c10d" --rdzv_endpoint="localhost:1234" \
       ../../../cosyvoice/bin/train.py \
       --train_engine $train_engine \
       --config conf/cosyvoice3.yaml \
-      --train_data data/train.data.list \
-      --cv_data data/dev.data.list \
+      --train_data data/$data_exp/train.data.list \
+      --cv_data data/$data_exp/dev.data.list \
       --qwen_pretrain_path $pretrained_model_dir/CosyVoice-BlankEN \
       --onnx_path $pretrained_model_dir \
       --model $model \
       --checkpoint $pretrained_model_dir/$model.pt \
-      --model_dir `pwd`/exp/cosyvoice3/$model/$train_engine \
-      --tensorboard_dir `pwd`/tensorboard/cosyvoice3/$model/$train_engine \
+      --model_dir `pwd`/exp/cosyvoice3/$model/$model_exp \
+      --tensorboard_dir `pwd`/tensorboard/cosyvoice3/$model/$model_exp \
       --ddp.dist_backend $dist_backend \
       --num_workers ${num_workers} \
       --prefetch ${prefetch} \

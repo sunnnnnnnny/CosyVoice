@@ -48,6 +48,7 @@ class EmbeddingExtractor():
 
 # singleton mode, only initialized once
 onnx_path = os.environ.get('onnx_path')
+onnx_path = None
 if onnx_path is not None:
     embedding_extractor, online_feature = EmbeddingExtractor(model_path=os.path.join(onnx_path, 'campplus.onnx')), True
 else:

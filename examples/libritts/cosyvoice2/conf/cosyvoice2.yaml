@@ -210,11 +210,11 @@ data_pipeline_gan: [
 train_conf:
     optim: adam
     optim_conf:
-        lr: 1e-5 # change to 1e-5 during sft
+        lr: 5e-7 # change to 1e-5 during sft
     scheduler: constantlr # change to constantlr during sft
     scheduler_conf:
         warmup_steps: 2500
-    max_epoch: 200
+    max_epoch: 20
     grad_clip: 5
     accum_grad: 2
     log_interval: 100

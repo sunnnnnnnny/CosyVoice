@@ -9,18 +9,21 @@ logger = logging.getLogger()
 
 
 def main():
-    wavs = list(glob.glob('{}/*/*/*wav'.format(args.src_dir)))
+    wavs = list(glob.glob('{}/*wav'.format(args.src_dir)))
 
     utt2wav, utt2text, utt2spk, spk2utt = {}, {}, {}, {}
     for wav in tqdm(wavs):
-        txt = wav.replace('.wav', '.normalized.txt')
+        # txt = wav.replace('.wav', '.normalized.txt')
+        txt = wav[:-4] + ".txt"
         if not os.path.exists(txt):
             logger.warning('{} do not exsist'.format(txt))
             continue
         with open(txt) as f:
             content = ''.join(l.replace('\n', '') for l in f.readline())
-        utt = os.path.basename(wav).replace('.wav', '')
-        spk = utt.split('_')[0]
+        # utt = os.path.basename(wav).replace('.wav', '')
+        utt = os.path.basename(wav)[:-4]
+        # spk = utt.split('_')[0]
+        spk = wav.split("/")[-2]
         utt2wav[utt] = wav
         utt2text[utt] = content
         utt2spk[utt] = spk

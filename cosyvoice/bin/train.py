@@ -97,7 +97,7 @@ def get_args():
 @record
 def main():
     args = get_args()
-    os.environ['onnx_path'] = args.onnx_path
+    # os.environ['onnx_path'] = args.onnx_path
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(message)s')
     # gan train has some special initialization logic
