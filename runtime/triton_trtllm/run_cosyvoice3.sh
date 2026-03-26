@@ -17,8 +17,8 @@ trt_dtype=bfloat16
 trt_weights_dir=$cosyvoice_path/runtime/triton_trtllm/trt_weights_${trt_dtype}
 trt_engines_dir=$cosyvoice_path/runtime/triton_trtllm/trt_engines_${trt_dtype}
 
-model_repo_src=$cosyvoice_path/runtime/triton_trtllm/model_repo_cosyvoice3
-model_repo=$cosyvoice_path/runtime/triton_trtllm/model_repo_cosyvoice3_copy
+model_repo_src=$cosyvoice_path/runtime/triton_trtllm/model_repo_cosyvoice3_change_params
+model_repo=$cosyvoice_path/runtime/triton_trtllm/model_repo_cosyvoice3_change_params
 bls_instance_num=10
 
 if [ $stage -le -1 ] && [ $stop_stage -ge -1 ]; then

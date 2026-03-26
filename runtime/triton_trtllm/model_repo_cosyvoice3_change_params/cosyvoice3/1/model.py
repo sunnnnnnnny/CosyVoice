@@ -2,12 +2,12 @@ import json
 import re
 import time
 import asyncio
-
+import os
 import numpy as np
 import torch
 from torch.utils.dlpack import to_dlpack
 import triton_python_backend_utils as pb_utils
-
+import soundfile as sf
 import httpx
 import torchaudio
 from functools import partial
@@ -68,10 +68,114 @@ class TritonPythonModel:
 
         # Speaker cache to avoid redundant audio_tokenizer/speaker_embedding calls
         self.speaker_cache = {}
-        spk_info_path = "/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice/spk2info.pt"
-        spk_info = torch.load(spk_info_path, map_location="cpu", weights_only=False)
-        self.spk_info = spk_info
-
+        self.filename2spk = {
+            "ALI_denoise3.wav_0000000000_0000119360.wav": "ali",
+            "ALYN_denoise81.wav_0000356800_0000467520.wav": "alyn",
+            "HECTOR_denoise37.wav_0002576000_0002716480.wav": "hector",
+            "anaymiel_denoise7.wav_0001471360_0001577600.wav": "anaymiel",
+            "andybadilloo_denoise166.wav_0003022720_0003136320.wav": "andybadilloo",
+            "arath_rosstt_denoise7.wav_0001145280_0001294720.wav": "arath",
+            "autos.jlbl_denoise366.wav_0000351680_0000441280.wav": "autos_jlbl",
+            "autosexoticosmexico_denoise86.wav_0001826240_0001968000.wav": "autosexoticosmexico",
+            "christiansotelo42_denoise_4_299.wav": "christiansotelo",
+            "corteswilver_denoise_3_141.wav": "corteswilver",
+            "dingler_adrian_denoise3.wav_0000000000_0000132800.wav": "dingler_adrian",
+            "ellieoficial_denoise129.wav_0000804160_0000990720.wav": "ellieoficial",
+            "heyaaamir_denoise121.wav_0001576960_0001723520.wav": "heyaaamir",
+            "ittai_mexico_denoise_1_064.wav": "ittai",
+            "mannysinfronteras_denoise82.wav_0004661120_0004808000.wav": "mannysinfronteras",
+            "mariaacastaneda_denoise125.wav_0002526400_0002692160.wav": "mariaacastaned",
+            "nataliapaulin.s_denoise36.wav_0003391040_0003523520.wav": "nataliapaulin",
+            "sacelady.mexico_denoise_4_278.wav": "sacelady",
+            "salvadorfiscal_denoise_3_1025.wav": "salvadorfiscal",
+            "sanangelusadoscertificad_denoise30.wav_0000399360_0000514560.wav": "sanangelusadoscertificad",
+            "soytuastro_denoise2.wav_0000536320_0000690560.wav": "soytuastro",
+            "VALE_denoise2.wav_0000022080_0000097600.wav": "vale",
+            "vivemexico_4_denoise_1_014.wav": "vivemexico",
+            "vladk.ruso_denoise72.wav_0001386880_0001523520.wav": "vladk",
+            "ximear444_denoise109.wav_0001784960_0001920640.wav": "ximear444",
+            "zasha_ylacholada_denoise172.wav_0001047040_0001192960.wav": "zasha_ylacholada",
+            "Aitana.mp3_vocals.wav": "Aitana",
+            "CDMX.mp3_vocals.wav":"CDMX",
+            "Danna.mp3_vocals.wav":"Danna",
+            "Cazzu.mp3_vocals.wav":"Cazzu",
+            "Georgina.mp3_vocals.wav":"Georgina",
+            "Rauw.mp3_vocals.wav":"Rauw",
+            "Valentina.mp3_vocals.wav":"Valentina",
+            "Benito.mp3_vocals.wav":"Benito",
+            "Majo.mp3_vocals.wav":"Majo",
+            "Carlos.mp3_vocals.wav":"Carlos",
+            "Tini.mp3_vocals.wav":"Tini",
+            "LosYoutubersclips.mp3_vocals.wav":"LosYoutubersclips",
+            "Kass.mp3_vocals.wav":"Kass",
+            "Speitzer.mp3_vocals.wav":"Speitzer",
+            "Florencia.mp3_vocals.wav":"Florencia",
+            "Paloma.mp3_vocals.wav":"Paloma",
+            "clip-1773047275508.mp3_vocals.wav":"clip-1773047275508",
+            "Inicianlasclips.mp3_vocals.wav":"Inicianlasclips",
+            "Nicoleclips.mp3_vocals.wav":"Nicoleclips",
+            "Renata.mp3_vocals.wav":"Renata",
+            "Top10clips.mp3_vocals.wav":"Top10clips",
+            "Joaqui.mp3_vocals.wav":"Joaqui",
+            "Alejandro.mp3_vocals.wav":"Alejandro",
+            "Maria.mp3_vocals.wav":"Maria",
+            "PreciodelOloniaclips.mp3_vocals.wav":"PreciodelOloniaclips",}
+        self.spk2filename = {}
+        for k, v in self.filename2spk.items():
+            self.spk2filename[v] = k
+        self.spk2text = {
+            "ali":"Miren este Nissan Z9 que estamos viendo en el diesel.",
+            "alyn":"En Emstar, te mostramos que no tiene por qué ser así.",
+            "Aitana":"Muchísimas gracias. De verdad que es la primera vez que hago este videoconvo, de verdad, así que.",
+            "Alejandro":"Soy Alejandro Spitzer. Estoy en Milán con Dolce & Gabbana y como soy foodie.",
+            "Benito":"Hoja por hoja estaban repletos de zapatillas, de moños y vestidos.",
+            "CDMX":"muchas gracias te platico un poco de de qué va a tratar la experiencia la parte de la comida de Arco",
+            "Carlos":"El cargador trae dos conectores, el de México o el de la parte, digamos más.",
+            "Cazzu":"Bueno, tengo una cartera enorme. Yo amaba las carteras chiquititas. Yo me quejaba un montón de mi mamá que llevaba como una cartera enorme.",
+            "Danna":"yo siempre quise ser una estrella yo veía las las",
+            "Florencia":"de poder arrancar y bueno de tener una segunda temporada de bogón",
+            "Georgina":"varias cosas de mi bolso os pueden sorprender, pero la verdad lo que más sorprende",
+            "hector":"Por cierto, el espacio en las plazas traseras es ligeramente mejor que en el Swift.",
+            "Inicianlasclips":"Y esta semana comenzó con sus conferencias mañaneras, que afirmó serán tres veces a la semana.",
+            "Joaqui":"algo que hago todas las mañanas, sinceramente tengo que ser honesta, no sé si funciona o no, yo lo vi en TikTok, estaba trendy y yo siento personalmente que me hace ver",
+            "Kass":"refleja finura y yo de que soy desordenada este y que también tengo como mucho apego a cositas",
+            "LosYoutubersclips":"Estos son los top 10 youtubers con más suscriptores de todo México. Comenta si sabes quién es el top uno.",
+            "Majo":"pero yo siempre tuve mucho amor. Si no hubiera sido así, quizá la historia sería muy diferente.",
+            "Maria":"Okay, ahora sí ya estamos en el coche y ya estamos en camino al evento.",
+            "Nicoleclips":"una vez cogí un un gloss de mi madre le pinté las patas de la mesa con gloss porque quedaban",
+            "Paloma":"ya me lo puse entonces voy a probar también ponerme esto que como un primer",
+            "PreciodelOloniaclips":"El o línea, el auto eléctrico mexicano a bajo costo.",
+            "Rauw":"no es la flecha es el indio es el piquete es el sazón el flow que tú le metas a las cosas y te puedes poner lo más sencillo que tengas pero si lo proyectas con seguridad",
+            "Renata":"Crear un look o encontrar un look para can va más allá de solamente encontrar un vestido.",
+            "Speitzer":"Soy Alejandro Spitzer. Estoy en Milán con Dolce & Gabbana y como soy foodie.",
+            "Tini":"bueno llegamos a México hace ya unos días estuvimos haciendo promo para",
+            "Top10clips":"Fue una experiencia muy bonita, muy interesante y amé las reacciones de Yalitza.",
+            "vale":"estamos hablando del nuevo.",
+            "Valentina":"dije qué perfume usaba porque siento que es como algo super personal vamos a darle la muestra hola soy Valentina Cenere estoy acá con Vogue y les voy a enseñar qué hay en mi bolsa",
+            "anaymiel":"creo que pueden mejorar sígueme para no perderte lugares increíbles",
+            "andybadilloo":"y vamos a poner estas dos sombras en crema de Carolina Herrera.",
+            "arath":"Yo nunca dejó de hacer pruebas y medir los datos, resultados.",
+            "autos_jlbl":"Con cada nueva línea que sale de esta camioneta.",
+            "autosexoticosmexico":"el nombre de este carro que es F5 es derivado a la escala fujita.",
+            "christiansotelo":"para poder platicar acerca de su proceso de compra.",
+            "clip-1773047275508":"soy como un poquito obsesionada con los productos para la piel, empezando mi rutina del skincare primero.",
+            "corteswilver":"y voy pasando yo dije a la aquí me van a dejar como coladera",
+            "dingler_adrian":"De todo Costa Rica, ¿cuál es el marchamo más barato que puedes pagar en es?",
+            "ellieoficial":"lo que para mí es un impacto demográfico y cultural.",
+            "heyaaamir":"La única manera de poderlo hacer nacional va a ser por decreto.",
+            "ittai":"entonces no me podría parar y enseñarles todo lo demás ya lo van a ver en el video",
+            "mannysinfronteras":"Pero si aprendemos a depender de lo nuestro.",
+            "mariaacastaned":"Más de lo que te imaginas. Es que es super fresco, delgadito, cómodo.",
+            "nataliapaulin":"Y darme o no la razón, los invito a que me digan en los comentarios ustedes qué opinan.",
+            "sacelady":"la vamos a activar para ustedes la vamos a activar para ustedes hermosas",
+            "salvadorfiscal":"A ver Fernando, si llevo cinco meses recibo aguinaldo, sí.",
+            "sanangelusadoscertificad":"En el interior contamos con cluster de instrumentos digital.",
+            "soytuastro":"es un grupo donde se le incluye siempre las personas con muchos planetas en la casa once buena",
+            "vivemexico":"Rosita, buenas tardes, Rosita, buenos días, buen día Dani, Alejandra.",
+            "vladk":"Que sea negocio, chicos, hay autos como estos que les voy a decir una realidad.",
+            "ximear444":"pero cuando eres europeo o gringo todo el mundo te lo te lo festeja",
+            "zasha_ylacholada":"que recientemente sacó una rola con Santa Fe Clan y días después fue que pasó",}
+        self.prompt_speech_dir = "/gpfs01/nfs_share/data20250106/yuqiangz/master_models/aaaaaaaaa_train_data/mexico_exp/mexico_speech_prompt_spk51_fine_0319"
 
     def _convert_speech_tokens_to_str(self, speech_tokens):
         """Convert speech token IDs tensor/list to string like '<|s_N|>'."""
@@ -256,35 +360,74 @@ class TritonPythonModel:
 
     def _prepare_prompt(self, request):
         """Extract reference audio, tokenize, compute speaker embedding and mel feat."""
-        wav = pb_utils.get_input_tensor_by_name(request, "reference_wav")
-        wav_len = pb_utils.get_input_tensor_by_name(request, "reference_wav_len")
+        # wav = pb_utils.get_input_tensor_by_name(request, "reference_wav")
+        # wav_len = pb_utils.get_input_tensor_by_name(request, "reference_wav_len")
 
-        reference_text = pb_utils.get_input_tensor_by_name(request, "reference_text")
-        reference_text = reference_text.as_numpy()[0][0].decode('utf-8') if reference_text is not None else ""
+        # spk_name = pb_utils.get_input_tensor_by_name(request, "spk_name")
+        spk_name = pb_utils.get_input_tensor_by_name(request, "spk_name").as_numpy()
+        spk_name = spk_name[0][0].decode('utf-8')
+
+        print("spk_name : ",spk_name)
+        assert spk_name in self.spk2text
+        filename = self.spk2filename[spk_name]
+        print("filename : ",filename)
+        prompt_wav_path = os.path.join(self.prompt_speech_dir, filename)
+        print("prompt_wav_path: ", prompt_wav_path)
+        assert os.path.exists(prompt_wav_path)
+        wav, sr = sf.read(prompt_wav_path)
+        print('1')
+        assert sr == 16000, "sample rate hardcoded in server"
+        assert len(wav.shape) == 1, "waveform should be 1D"
+        wav_len = np.array([[len(wav)]], dtype=np.int32)
+        print("2")
+        wav_len = torch.from_numpy(wav_len)
+        print("3")
+        wav = wav.reshape(1, -1).astype(np.float32)
+        print("4")
+        wav = torch.from_numpy(wav)
+        print("5")
+        
+
+
+        # reference_text = pb_utils.get_input_tensor_by_name(request, "reference_text")
+        reference_text = self.spk2text[spk_name]
+        print("6")
+        # reference_text = reference_text.as_numpy()[0][0].decode('utf-8') if reference_text is not None else ""
         if '<|endofprompt|>' not in reference_text:
             reference_text = 'You are a helpful assistant.<|endofprompt|>' + reference_text
-
+        print("7")
         # Check speaker cache
         if reference_text in self.speaker_cache:
             cached = self.speaker_cache[reference_text]
             return (cached['prompt_speech_tokens_for_llm'], cached['prompt_speech_tokens'],
                     cached['prompt_speech_feat'], cached['prompt_spk_embedding'], reference_text)
-
+        print("8")
         # Audio tokenizer
-        wav_np = wav.as_numpy()
-        wav_len_val = wav_len.as_numpy()[0][0]
-        prompt_speech_tokens = self.forward_audio_tokenizer(wav, wav_len)
+        wav_np = wav.numpy()
+        print("9")
+        # wav_np = wav
+        wav_len_val = wav_len.numpy()[0][0]
+        print(wav_len_val)
+        print(type(wav))
+        print(type(wav_len))
+        # wav_len_val = wav_len[0][0]
+        pb_wav = pb_utils.Tensor("reference_wav", wav.cpu().numpy().astype(np.float32))
+        pb_wav_len = pb_utils.Tensor("reference_wav_len", wav_len.cpu().numpy().astype(np.int32))
+        prompt_speech_tokens = self.forward_audio_tokenizer(pb_wav, pb_wav_len)
+        print("extract token done.")
         prompt_speech_tokens = prompt_speech_tokens.unsqueeze(0)  # [1, T]
 
         # Speaker embedding
         wav_tensor = torch.from_numpy(wav_np)
         wav_tensor = wav_tensor[:, :wav_len_val]
         prompt_spk_embedding = self.forward_speaker_embedding(wav_tensor)
+        print("extract embedding done")
 
         # Mel extraction at 24kHz with CosyVoice3 params
         prompt_speech_resample = torchaudio.transforms.Resample(
             orig_freq=16000, new_freq=24000)(wav_tensor)
         speech_feat = self._extract_speech_feat(prompt_speech_resample)
+        print("extrace feat done.")
 
         # Keep full tokens for LLM prefill (untruncated)
         prompt_speech_tokens_for_llm = prompt_speech_tokens.clone()
@@ -300,7 +443,7 @@ class TritonPythonModel:
         self.speaker_cache[reference_text] = {
             'prompt_speech_tokens_for_llm': prompt_speech_tokens_for_llm,
             'prompt_speech_tokens': prompt_speech_tokens,
-            'prompt_speech_feat': prompt_speech_feat,``
+            'prompt_speech_feat': prompt_speech_feat,
             'prompt_spk_embedding': prompt_spk_embedding,
         }
 
@@ -438,10 +581,10 @@ class TritonPythonModel:
     async def _process_request_offline(self, request):
         """Process a single request in offline (non-decoupled) mode."""
         request_id = request.request_id()
-
+        print("before prepare")
         prompt_speech_tokens_for_llm, prompt_speech_tokens, prompt_speech_feat, \
             prompt_spk_embedding, reference_text = self._prepare_prompt(request)
-
+        print("pre done.")
         target_text = pb_utils.get_input_tensor_by_name(request, "target_text").as_numpy()
         target_text = target_text[0][0].decode('utf-8')
 
@@ -485,6 +628,7 @@ class TritonPythonModel:
                     response = await self._process_request_offline(request)
                     responses.append(response)
                 except Exception as e:
+                    print("e : ", e)
                     self.logger.log_error(f"Error in offline request: {e}")
                     responses.append(pb_utils.InferenceResponse(
                         error=pb_utils.TritonError(str(e))))

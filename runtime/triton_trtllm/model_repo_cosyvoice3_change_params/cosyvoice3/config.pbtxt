@@ -34,22 +34,9 @@ parameters [
 
 input [
   {
-    name: "reference_wav"
-    data_type: TYPE_FP32
-    dims: [-1]
-    optional: true
-  },
-  {
-    name: "reference_wav_len"
-    data_type: TYPE_INT32
-    dims: [1]
-    optional: true
-  },
-  {
-    name: "reference_text"
+    name: "spk_name"
     data_type: TYPE_STRING
     dims: [1]
-    optional: true
   },
   {
     name: "target_text"

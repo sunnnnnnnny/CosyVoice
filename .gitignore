@@ -59,3 +59,6 @@ runtime/triton_trtllm/trt_weights_bfloat16
 runtime/triton_trtllm/model_repo_cosyvoice3_copy
 runtime/triton_trtllm/model.cache
 runtime/triton_trtllm/cosyvoice3_wenetspeech4tts_trtllm_llm_batch_size_*
+runtime/triton_trtllm/model_repo_cosyvoice3_change_params_panxb
+runtime/triton_trtllm/client_http_panxb.py
+runtime/triton_trtllm/run_cosyvoice3_panxb.sh
