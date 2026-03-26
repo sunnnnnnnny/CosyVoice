@@ -44,7 +44,7 @@ def get_args():
     parser.add_argument(
         "--target-text",
         type=str,
-        default="身临其境，换新体验。塑造开源语音合成新范式，让智能语音更自然。",
+        default="¡Llamando a todos los papás perrunos y gatunos! Si ustedes son como yo, que adonde van, llevan a su mascota, esta camioneta les va a solucionar la vida. Los asientos traseros se abaten completamente planos, dejando un espacio gigante atrás. Le pones su cobijita, su transportadora y hace que tu perrito viaje como rey. Además, el material de la cajuela es súper resistente a rasguños y fácil de aspirar para quitar los pelitos. También trae salidas de aire acondicionado en la parte trasera para que Firulais no vaya pasando calor. Mencionen aquí en los comentarios cómo se llama su mascota, ¡los leo a todos!",
         help="",
     )
 
@@ -99,7 +99,6 @@ if __name__ == "__main__":
     server_url = args.server_url
     if not server_url.startswith(("http://", "https://")):
         server_url = f"http://{server_url}"
-
     url = f"{server_url}/v2/models/{args.model_name}/infer"
     
     data = prepare_request(args.target_text)
