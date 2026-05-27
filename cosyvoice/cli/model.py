@@ -222,6 +222,7 @@ class CosyVoiceModel:
         else:
             # deal with all tokens
             p.join()
+            print("self.tts_speech_token_dict[this_uuid] : ",self.tts_speech_token_dict[this_uuid])
             this_tts_speech_token = torch.tensor(self.tts_speech_token_dict[this_uuid]).unsqueeze(dim=0)
             this_tts_speech = self.token2wav(token=this_tts_speech_token,
                                              prompt_token=flow_prompt_speech_token,
@@ -375,6 +376,8 @@ class CosyVoice2Model(CosyVoiceModel):
         else:
             # deal with all tokens
             p.join()
+            # if len(self.tts_speech_token_dict[this_uuid]) == 0:
+            #     self.tts_speech_token_dict[this_uuid] = [0 for _ in range(25)]
             this_tts_speech_token = torch.tensor(self.tts_speech_token_dict[this_uuid]).unsqueeze(dim=0)
             this_tts_speech = self.token2wav(token=this_tts_speech_token,
                                              prompt_token=flow_prompt_speech_token,

@@ -62,3 +62,11 @@ runtime/triton_trtllm/cosyvoice3_wenetspeech4tts_trtllm_llm_batch_size_*
 runtime/triton_trtllm/model_repo_cosyvoice3_change_params_panxb
 runtime/triton_trtllm/client_http_panxb.py
 runtime/triton_trtllm/run_cosyvoice3_panxb.sh
+results*
+pretrained*
+en_au*
+audios_gemini_tts_for_prompt_16k
+runtime/triton_trtllm/trt*
+runtime/triton_trtllm/model_repo_cosyvoice3_change_params_model2
+daily_cache
+runtime/triton_trtllm

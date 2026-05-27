@@ -1,3 +1,7 @@
+import os
+os.system("pip install func_timeout")
+os.system("pip install pydub")
+os.system("pip install ffmpeg-python")
 import requests
 import time
 import numpy as np
@@ -320,7 +324,6 @@ async def inference_tts(request: Request):
             url="http://localhost:18000/v2/models/cosyvoice3/infer",
             json=request_data,
         ).json()
-
         # 解码音频数据
         audio = res["outputs"][0]["data"]
         wav_data = torch.from_numpy(np.array(audio, dtype=np.float32)).unsqueeze(0)
@@ -336,7 +339,7 @@ async def inference_tts(request: Request):
         if audio_type == "opus":
             wav = convert_wav_bytes_to_opus_bytes(wav_data, volume=volume)
         else:
-            wav = convert_wav_bytes_to_mp3_bytes(wav_data, volume=volume)
+            wav = convert_wav_bytes_to_mp3_bytes(wav_data, sample_rate=24000 , volume=volume)
         wav_base64 = base64.b64encode(wav).decode("utf-8")
 
         cost_time = str(time.time() - t0)

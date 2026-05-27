@@ -155,7 +155,8 @@ class TransformerLM(torch.nn.Module):
             ignore_eos: bool = True,
     ):
         if ignore_eos is True:
-            weighted_scores[self.speech_token_size] = -float('inf')
+            # weighted_scores[self.speech_token_size] = -float('inf')
+            weighted_scores[self.speech_token_size:self.speech_token_size+200] = -float('inf')
         top_ids = self.sampling(weighted_scores, decoded_tokens, sampling)
         return top_ids
 
@@ -535,12 +536,16 @@ class Qwen2LM(TransformerLM):
         else:
             out_tokens = []
             cache = None
+            # import ipdb
+            # ipdb.set_trace()
+            # print("self.stop_token_ids : ", self.stop_token_ids)
             for i in range(max_len):
                 y_pred, cache = self.llm.forward_one_step(lm_input,
                                                           masks=torch.tril(torch.ones((1, lm_input.shape[1], lm_input.shape[1]), device=lm_input.device)).to(torch.bool),
                                                           cache=cache)
                 logp = self.llm_decoder(y_pred[:, -1]).log_softmax(dim=-1)
                 top_ids = self.sampling_ids(logp.squeeze(dim=0), out_tokens, sampling, ignore_eos=True if i < min_len else False)
+                # print(f"i : {i} out_tokens : {out_tokens} top_ids : {top_ids} min_len : {min_len} max_len : {max_len}")
                 if top_ids in self.stop_token_ids:
                     break
                 # in stream mode, yield token one by one

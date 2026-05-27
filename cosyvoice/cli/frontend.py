@@ -57,7 +57,7 @@ class CosyVoiceFrontEnd:
             import ttsfrd
             self.frd = ttsfrd.TtsFrontendEngine()
             ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-            assert self.frd.initialize('{}/../../pretrained_models/CosyVoice-ttsfrd/resource'.format(ROOT_DIR)) is True, \
+            assert self.frd.initialize('/gpfs01/nfs_share/data20250106/yuqiangz/master_models/CosyVoice/resource') is True, \
                 'failed to initialize ttsfrd resource'
             self.frd.set_lang_type('pinyinvg')
             self.text_frontend = 'ttsfrd'
