@@ -51,3 +51,9 @@ pretrained_models/*
 *_pb2.py
 *.tar
 third_party
+daily_cache
+runtime/triton_trtllm
+results
+train_data
+malay_prompt_wav
+vllm_daily_exp
