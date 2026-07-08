@@ -50,3 +50,15 @@ pretrained_models/*
 *_pb2_grpc.py
 *_pb2.py
 *.tar
+third_party
+daily_cache
+runtime/triton_trtllm
+results
+train_data
+malay_prompt_wav
+vllm_daily_exp
+downloaded_audios_malay_prompt_0609*
+gemini_choose
+vc_data_cache
+t*py
+utils*py
